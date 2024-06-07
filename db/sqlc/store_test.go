@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,8 +13,6 @@ func TestTransferTx(t *testing.T) {
 	account := createRandomAccount(t)
 	account2 := createRandomAccount(t)
 
-	fmt.Println(">> before:", account.Balance, account2.Balance)
-
 	// run n concurrent transfer transactions
 	n := 10
 	amount := int64(10)
@@ -23,11 +20,9 @@ func TestTransferTx(t *testing.T) {
 	errs := make(chan error)
 	results := make(chan TransferTxResult)
 	for i := 0; i < n; i++ {
-		txName := fmt.Sprintf("tx %d", i+1)
 
 		go func() {
-			ctx := context.WithValue(context.Background(), txKey, txName)
-			result, err := store.TransferTx(ctx, TransferTxParams{
+			result, err := store.TransferTx(context.Background(), TransferTxParams{
 				FromAccountID: account.ID,
 				ToAccountID:   account2.ID,
 				Amount:        amount,
@@ -94,8 +89,5 @@ func TestTransferTx(t *testing.T) {
 		require.True(t, delta1 > 0)
 		require.NotContains(t, existing, k)
 		existing[k] = true
-
-		fmt.Println(">> after:", account.Balance, account2.Balance)
-
 	}
 }
