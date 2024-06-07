@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,8 @@ func TestTransferTx(t *testing.T) {
 
 	account := createRandomAccount(t)
 	account2 := createRandomAccount(t)
+
+	fmt.Println(">> before:", account.Balance, account2.Balance)
 
 	// run n concurrent transfer transactions
 	n := 5
@@ -31,6 +34,7 @@ func TestTransferTx(t *testing.T) {
 		}()
 	}
 
+	existing := make(map[int]bool)
 	for i := 0; i < n; i++ {
 		err := <-errs
 		require.NoError(t, err)
@@ -67,5 +71,28 @@ func TestTransferTx(t *testing.T) {
 		require.NotZero(t, toEntry.CreatedAt)
 
 		//check balance
+		fromAccount := result.FromAccount
+		require.NotEmpty(t, fromAccount)
+		require.Equal(t, account.ID, fromAccount.ID)
+
+		toAccount := result.ToAccount
+		require.NotEmpty(t, toAccount)
+		require.Equal(t, account2.ID, toAccount.ID)
+
+		delta1 := account.Balance - fromAccount.Balance
+		delta2 := toAccount.Balance - account2.Balance
+
+		require.Equal(t, delta1, delta2)
+		require.True(t, delta1 > 0)
+		require.True(t, delta1%amount == 0)
+
+		k := int(delta1 / amount)
+		require.True(t, k >= 1 && k <= n)
+		require.True(t, delta1 > 0)
+		require.NotContains(t, existing, k)
+		existing[k] = true
+
+		fmt.Println(">> after:", account.Balance, account2.Balance)
+
 	}
 }
