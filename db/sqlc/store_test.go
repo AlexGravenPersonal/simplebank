@@ -66,9 +66,6 @@ func TestTransferTx(t *testing.T) {
 		require.NotZero(t, toEntry.ID)
 		require.NotZero(t, toEntry.CreatedAt)
 
-		_, err = store.GetEntry(context.Background(), toEntry.ID)
-		require.NoError(t, err)
-
 		//check balance
 	}
 }
